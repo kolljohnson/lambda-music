@@ -1,0 +1,12 @@
+port = Port.open({:spawn, "pacat -p --channels=1 --rate=16000 --format=s16be"}, [:binary])
+
+#expr = "(\\x.x)A"
+
+#expr = "(\\x.\\y.\\z.\\w.(((w y) z)x))ABCD"
+
+expr = "(\\a.\\b.\\c.((((((a a) b) b) c) c) b))CEA"
+
+LambdaMusic.compute(expr)
+|> PCM_Play.play(port)
+
+

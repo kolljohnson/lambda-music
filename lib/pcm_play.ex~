@@ -1,0 +1,33 @@
+defmodule PCM_Play do
+
+	@moduledoc """
+	Plays musical notes using PCM
+	"""
+	
+	#frequencies for the notes
+  notes = %{
+		?A => 440,
+		?B => 493.88,
+		?C => 523.25,
+		?D => 587.33,
+		?E => 659.25,
+		?F => 698.46,
+		?G => 783.99, 
+	}
+
+	duration = 0.5
+
+	@doc """
+	Plays a given string of notes
+	"""	
+	def play(notes) do
+		port = Port.open({:spawn, "pacat -p --channels=1 --rate=16000 --format=s16be"}, [:binary])
+		
+		for <<note <- notes>> do
+      frequency = notes[note]
+			w = %SineWave{frequency: frequency}
+			data = PcmSampler.sample(w, duration)
+			send(port, {self, {:command, data}})
+		end
+	end
+end

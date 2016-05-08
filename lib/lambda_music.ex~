@@ -1,0 +1,27 @@
+defmodule LambdaMusic do
+	@defmodule """ 
+	Computes the lambda encoding of a given musical score, then sends the computed
+	notation to a PCM module for playback.
+	"""
+
+	require :pcm_playground
+	
+	@doc """
+	Takes in a given musical score and returns the computed encoding.
+	"""
+	def encode(score) do
+		
+	end
+
+	@doc """
+	Computes the beta reductions within the encoded score
+  """
+	def beta(score) do
+	end
+	
+	
+	def beta(notes) do
+	end
+
+	
+end
