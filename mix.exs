@@ -4,7 +4,7 @@ defmodule LambdaMusic.Mixfile do
   def project do
     [app: :lambda_music,
      version: "0.0.1",
-     elixir: "~> 1.1-dev",
+     elixir: "~> 1.2-dev",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps]
@@ -27,6 +27,8 @@ defmodule LambdaMusic.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    []
+    [
+		{:ex_midilib, git: "https://github.com/knewter/ex_midilib.git"}
+		]
   end
 end

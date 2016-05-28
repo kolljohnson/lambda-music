@@ -1,6 +1,6 @@
 -module(music_parser).
 -export([parse/1, parse_and_scan/1, format_error/1]).
--file("src/music_parser.yrl", 40).
+-file("src/music_parser.yrl", 41).
 
 extract_token({_Token, _Line, Value}) -> Value.
 
@@ -236,9 +236,13 @@ yeccpars2(22=S, Cat, Ss, Stack, T, Ts, Tzr) ->
 yeccpars2(25=S, Cat, Ss, Stack, T, Ts, Tzr) ->
  yeccpars2_25(S, Cat, Ss, Stack, T, Ts, Tzr);
 %% yeccpars2(26=S, Cat, Ss, Stack, T, Ts, Tzr) ->
-%%  yeccpars2_26(S, Cat, Ss, Stack, T, Ts, Tzr);
-yeccpars2(27=S, Cat, Ss, Stack, T, Ts, Tzr) ->
- yeccpars2_27(S, Cat, Ss, Stack, T, Ts, Tzr);
+%%  yeccpars2_14(S, Cat, Ss, Stack, T, Ts, Tzr);
+%% yeccpars2(27=S, Cat, Ss, Stack, T, Ts, Tzr) ->
+%%  yeccpars2_27(S, Cat, Ss, Stack, T, Ts, Tzr);
+yeccpars2(28=S, Cat, Ss, Stack, T, Ts, Tzr) ->
+ yeccpars2_28(S, Cat, Ss, Stack, T, Ts, Tzr);
+%% yeccpars2(29=S, Cat, Ss, Stack, T, Ts, Tzr) ->
+%%  yeccpars2_29(S, Cat, Ss, Stack, T, Ts, Tzr);
 yeccpars2(Other, _, _, _, _, _, _) ->
  erlang:error({yecc_bug,"1.4",{missing_state_in_action_table, Other}}).
 
@@ -372,7 +376,7 @@ yeccpars2_22(_S, Cat, Ss, Stack, T, Ts, Tzr) ->
 
 -dialyzer({nowarn_function, yeccpars2_23/7}).
 yeccpars2_23(S, r_bracket, Ss, Stack, T, Ts, Tzr) ->
- yeccpars1(S, 27, Ss, Stack, T, Ts, Tzr);
+ yeccpars1(S, 28, Ss, Stack, T, Ts, Tzr);
 yeccpars2_23(_, _, _, _, T, _, _) ->
  yeccerror(T).
 
@@ -382,20 +386,37 @@ yeccpars2_25(_S, Cat, Ss, Stack, T, Ts, Tzr) ->
  NewStack = yeccpars2_25_(Stack),
  yeccgoto_c_note(hd(Ss), Cat, Ss, NewStack, T, Ts, Tzr).
 
-yeccpars2_26(_S, Cat, Ss, Stack, T, Ts, Tzr) ->
- [_|Nss] = Ss,
- NewStack = yeccpars2_26_(Stack),
- yeccgoto_chord(hd(Nss), Cat, Nss, NewStack, T, Ts, Tzr).
+%% yeccpars2_26: see yeccpars2_14
 
 yeccpars2_27(_S, Cat, Ss, Stack, T, Ts, Tzr) ->
  [_,_|Nss] = Ss,
  NewStack = yeccpars2_27_(Stack),
+ yeccgoto_chord(hd(Nss), Cat, Nss, NewStack, T, Ts, Tzr).
+
+yeccpars2_28(S, l_bracket, Ss, Stack, T, Ts, Tzr) ->
+ yeccpars1(S, 14, Ss, Stack, T, Ts, Tzr);
+yeccpars2_28(S, l_chevron, Ss, Stack, T, Ts, Tzr) ->
+ yeccpars1(S, 15, Ss, Stack, T, Ts, Tzr);
+yeccpars2_28(S, left_paren, Ss, Stack, T, Ts, Tzr) ->
+ yeccpars1(S, 16, Ss, Stack, T, Ts, Tzr);
+yeccpars2_28(S, note, Ss, Stack, T, Ts, Tzr) ->
+ yeccpars1(S, 17, Ss, Stack, T, Ts, Tzr);
+yeccpars2_28(_S, Cat, Ss, Stack, T, Ts, Tzr) ->
+ [_,_|Nss] = Ss,
+ NewStack = yeccpars2_28_(Stack),
+ yeccgoto_notes(hd(Nss), Cat, Nss, NewStack, T, Ts, Tzr).
+
+yeccpars2_29(_S, Cat, Ss, Stack, T, Ts, Tzr) ->
+ [_,_,_|Nss] = Ss,
+ NewStack = yeccpars2_29_(Stack),
  yeccgoto_notes(hd(Nss), Cat, Nss, NewStack, T, Ts, Tzr).
 
 yeccgoto_c_note(14, Cat, Ss, Stack, T, Ts, Tzr) ->
  yeccpars2_14(24, Cat, Ss, Stack, T, Ts, Tzr);
-yeccgoto_c_note(24=_S, Cat, Ss, Stack, T, Ts, Tzr) ->
- yeccpars2_26(_S, Cat, Ss, Stack, T, Ts, Tzr).
+yeccgoto_c_note(24, Cat, Ss, Stack, T, Ts, Tzr) ->
+ yeccpars2_14(26, Cat, Ss, Stack, T, Ts, Tzr);
+yeccgoto_c_note(26=_S, Cat, Ss, Stack, T, Ts, Tzr) ->
+ yeccpars2_27(_S, Cat, Ss, Stack, T, Ts, Tzr).
 
 yeccgoto_chord(14, Cat, Ss, Stack, T, Ts, Tzr) ->
  yeccpars2_23(23, Cat, Ss, Stack, T, Ts, Tzr).
@@ -407,7 +428,9 @@ yeccgoto_notes(15, Cat, Ss, Stack, T, Ts, Tzr) ->
 yeccgoto_notes(16, Cat, Ss, Stack, T, Ts, Tzr) ->
  yeccpars2_19(19, Cat, Ss, Stack, T, Ts, Tzr);
 yeccgoto_notes(17=_S, Cat, Ss, Stack, T, Ts, Tzr) ->
- yeccpars2_18(_S, Cat, Ss, Stack, T, Ts, Tzr).
+ yeccpars2_18(_S, Cat, Ss, Stack, T, Ts, Tzr);
+yeccgoto_notes(28=_S, Cat, Ss, Stack, T, Ts, Tzr) ->
+ yeccpars2_29(_S, Cat, Ss, Stack, T, Ts, Tzr).
 
 yeccgoto_term(0, Cat, Ss, Stack, T, Ts, Tzr) ->
  yeccpars2_2(2, Cat, Ss, Stack, T, Ts, Tzr);
@@ -422,7 +445,7 @@ yeccgoto_terms(0, Cat, Ss, Stack, T, Ts, Tzr) ->
  yeccpars2_1(1, Cat, Ss, Stack, T, Ts, Tzr).
 
 -compile({inline,yeccpars2_5_/1}).
--file("src/music_parser.yrl", 25).
+-file("src/music_parser.yrl", 26).
 yeccpars2_5_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
@@ -430,7 +453,7 @@ yeccpars2_5_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_8_/1}).
--file("src/music_parser.yrl", 34).
+-file("src/music_parser.yrl", 35).
 yeccpars2_8_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -438,7 +461,7 @@ yeccpars2_8_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_9_/1}).
--file("src/music_parser.yrl", 28).
+-file("src/music_parser.yrl", 29).
 yeccpars2_9_(__Stack0) ->
  [__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -446,7 +469,7 @@ yeccpars2_9_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_12_/1}).
--file("src/music_parser.yrl", 31).
+-file("src/music_parser.yrl", 32).
 yeccpars2_12_(__Stack0) ->
  [__4,__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -462,7 +485,7 @@ yeccpars2_13_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_17_/1}).
--file("src/music_parser.yrl", 9).
+-file("src/music_parser.yrl", 10).
 yeccpars2_17_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
@@ -478,7 +501,7 @@ yeccpars2_18_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_20_/1}).
--file("src/music_parser.yrl", 12).
+-file("src/music_parser.yrl", 13).
 yeccpars2_20_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -486,7 +509,7 @@ yeccpars2_20_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_22_/1}).
--file("src/music_parser.yrl", 22).
+-file("src/music_parser.yrl", 23).
 yeccpars2_22_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
@@ -494,28 +517,36 @@ yeccpars2_22_(__Stack0) ->
   end | __Stack].
 
 -compile({inline,yeccpars2_25_/1}).
--file("src/music_parser.yrl", 19).
+-file("src/music_parser.yrl", 20).
 yeccpars2_25_(__Stack0) ->
  [__1 | __Stack] = __Stack0,
  [begin
    { note , extract_token ( __1 ) }
   end | __Stack].
 
--compile({inline,yeccpars2_26_/1}).
--file("src/music_parser.yrl", 17).
-yeccpars2_26_(__Stack0) ->
- [__2,__1 | __Stack] = __Stack0,
+-compile({inline,yeccpars2_27_/1}).
+-file("src/music_parser.yrl", 18).
+yeccpars2_27_(__Stack0) ->
+ [__3,__2,__1 | __Stack] = __Stack0,
  [begin
-   { chord , __1 , __2 }
+   { chord , __1 , __2 , __3 }
   end | __Stack].
 
--compile({inline,yeccpars2_27_/1}).
--file("src/music_parser.yrl", 15).
-yeccpars2_27_(__Stack0) ->
+-compile({inline,yeccpars2_28_/1}).
+-file("src/music_parser.yrl", 16).
+yeccpars2_28_(__Stack0) ->
  [__3,__2,__1 | __Stack] = __Stack0,
  [begin
    __2
   end | __Stack].
 
+-compile({inline,yeccpars2_29_/1}).
+-file("src/music_parser.yrl", 7).
+yeccpars2_29_(__Stack0) ->
+ [__4,__3,__2,__1 | __Stack] = __Stack0,
+ [begin
+   { notes , __2 , __4 }
+  end | __Stack].
 
--file("src/music_parser.yrl", 45).
+
+-file("src/music_parser.yrl", 46).

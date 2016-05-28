@@ -8,6 +8,7 @@ terms ->  term  notes : {app, '$1', '$2'}.
 
 % sequence of notes
 notes -> note notes : {notes, {note, extract_token('$1')}, '$2'}.
+notes -> l_bracket chord r_bracket notes : {notes, '$2', '$4'}.
 
 % single note
 notes -> note : {note, extract_token('$1')}.
@@ -18,7 +19,7 @@ notes -> left_paren notes right_paren : '$2'.
 % chords are in brackets
 notes -> l_bracket chord r_bracket : '$2'.
 
-chord -> c_note c_note : {chord, '$1', '$2'}.
+chord -> c_note c_note c_note : {chord, '$1', '$2', '$3'}.
 
 c_note -> note : {note, extract_token('$1')}.
 

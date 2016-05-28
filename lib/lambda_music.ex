@@ -5,8 +5,11 @@ defmodule LambdaMusic do
 	"""
 	require :music_lexer
 	require :music_parser
-	require Record
 
+	defmodule ParsingError do
+		defexception message: "lambda-term parsing error"
+	end
+	
 	@doc""" 
 	Takes in a lambda expression and note sequence and computes it. 
 	Lambda expressions should use \\ for lambda, for example \\x.x
@@ -14,21 +17,24 @@ defmodule LambdaMusic do
 	def compute(expr) when is_binary(expr) do
 		expr = expr
 		|> String.replace("λ", "\\")
-		|> String.to_char_list
+		IO.puts(expr <> " ->")
+		expr = String.to_char_list(expr)
 		encode(expr)
 	end
 	
 	defp encode(expr) do
-		{:ok, tokens, _} = :music_lexer.string(expr)
-		{:ok, ast} = :music_parser.parse(tokens)
-		IO.puts(to_string(expr) <> " ->")
-		#bound_ast = no_free(ast)
-		#bound_ast
-		notes = beta(ast)
-		#IO.inspect(notes)
-		sequence = note_string(notes)
-		IO.puts(sequence)
-		sequence
+		try do
+			{:ok, tokens, _} = :music_lexer.string(expr)
+			{:ok, ast} = :music_parser.parse(tokens)
+			notes = beta(ast)
+		  sequence = note_string(notes)
+		  IO.puts(sequence)
+		  sequence
+		rescue
+		   err in MatchError ->
+			%MatchError{term: term} = err
+			raise ParseError, inspect term
+		end		
 	end
 
 	# note beta-redex
@@ -45,13 +51,8 @@ defmodule LambdaMusic do
 
 	# non-note beta-redex
 	defp beta({:app, {:lambda, x, y}, term2}) do
-#		cond no_free({:app, {:lambda, x, y}, z}) do
-#			true -> alpha({:app, {:lambda, x, y}, z})
-#												|> eval
-#			_ -> 	eval({:app, {:lambda, x, y}, z})  
-#		end
-    
 		beta_redex = eval({:lambda, x, y}, term2, x)
+		beta_redex
 	end
 
 	# return var
@@ -60,8 +61,8 @@ defmodule LambdaMusic do
 	end
 
 	# return note
-	defp beta({:note, _note}) do
-      {:note, _note}
+	defp beta({:note, note}) do
+      {:note, note}
 	end
 
 	# check for redexs in app then return 
@@ -73,67 +74,61 @@ defmodule LambdaMusic do
 	
 	#evaluates the Beta reduction by substituting the term with every occurence of a bound variable.
   defp eval({:lambda, x,  term}, z, bound) do
-		if (x == bound) do
-			beta_term = eval(term, z, bound)
-			#IO.inspect(beta_term)
-		else
-			beta_term = {:lambda, x, eval(term, z, bound)}
+		beta_term =
+		  cond do
+		  (x == bound) -> eval(term, z, bound)
+			true -> {:lambda, x, eval(term, z, bound)}
 		end
 		beta_term
 	end
 	
+		
+		#if (x == bound) do
+		#	beta_term = eval(term, z, bound)
+		#else
+		#	beta_term = {:lambda, x, eval(term, z, bound)}
+		#end
+		#beta_term
+	#end
 	
-	defp eval({:app, {_term1, var}, {_term2, var2}}, z, bound) do
+	
+	defp eval({:app, {term1, var}, {term2, var2}}, z, bound) do
 
 		if (var == bound && var2 == bound) do
 			{:app, z, z}
 		else
 			cond do
-				(var == bound) -> {:app, z, {_term2, var2}}
-				(var2 == bound) -> {:app, {_term1, var}, z}
-				true -> {:app, {_term1, var}, {_term2, var2}}
+				(var == bound) -> {:app, z, {term2, var2}}
+				(var2 == bound) -> {:app, {term1, var}, z}
+				true -> {:app, {term1, var}, {term2, var2}}
 			end
 		end
-	end
+  end
 
-	defp eval({_term, term1, term2}, z, bound) do
+	defp eval({term, term1, term2,term3}, z, bound) do
 		b_term1 = eval(term1, z, bound)
 		b_term2 = eval(term2, z, bound)
-		{_term, b_term1, b_term2}
+		b_term3 = eval(term3, z, bound)
+		{term, b_term1, b_term2, b_term3}
 	end
 
-	defp eval({_term, var}, beta_var, bound)  do
+	defp eval({term, term1, term2}, z, bound) do
+		b_term1 = eval(term1, z, bound)
+		b_term2 = eval(term2, z, bound)
+		{term, b_term1, b_term2}
+	end
+
+	defp eval({term, var}, beta_var, bound)  do
 		if (var == bound) do
 			beta_var
 		else
-			{_term, var}
+			{term, var}
 		end		
 	end
-
-#	defp eval({_term, _, term}, beta_var, bound) do
- #   beta_term = eval(term, beta_var)
-	#	{_term, beta_var, beta_term}
-	#end
-
-	#defp eval({:notes, _note, _notes}, _) do
-	#	{:notes, _note, _notes}
-	#end
-
 	
-
 	@doc """
 	Checks whether there are any free variables within the term.
 	"""
-	
-#	def no_free({_term, term1, term2}) do
-#		case {_term, term1, term2} do
-#			term1 when free?(term1) -> {_term, term1, term2}
-#			term2 when free?(term2) -> {_term, term1, term2}
-#			true -> alpha({_, term1, term2})
-#		end
-		
-#	end
-
 	def no_free({:lambda, variable, term}) do
 		if free?(term, variable) do
 			alpha({:lambda, variable, term})
@@ -149,12 +144,6 @@ defmodule LambdaMusic do
 			free?({:app, term1, term2}) -> alpha({:app, term1, term2})
 			true -> {:app, term1, term2}
 		end
-		
-		#if free?({:app, term1, term2}) do
-		#		 alpha({:app, term1, term2})
-		#		else
-		#			{:app, term1, term2}					
-		#end
 	end
 	
 	def no_free({:notes, note, notes}) do
@@ -169,7 +158,6 @@ defmodule LambdaMusic do
 		{:variable, variable}
 	end
 	
-	# Checks whether there are any free variables in a given term
 	defp free?({:notes, _, _}, _variable) do
 		false
 	end
@@ -220,6 +208,7 @@ defmodule LambdaMusic do
 
 	# check if the first term in an application is a lambda
 	defp lambda?({:lambda, _, _}), do: true
+	defp lambda?({_terms, _, _, _}), do: false
   defp lambda?({_terms, _, _}), do: false
 	defp lambda?({_term, _}), do: false
 	
@@ -242,28 +231,29 @@ defmodule LambdaMusic do
 		{:app, a_term1, a_term2}
 	end
 	
-	defp alpha({:notes, _note, _notes}, _alpha_var) do
-		{:notes, _note, _notes}
+	defp alpha({:notes, note, notes}, _alpha_var) do
+		{:notes, note, notes}
 	end
 	
-	defp alpha({:note, _note}, _alpha_var) do
-		{:note, _note}
+	defp alpha({:note, note}, _alpha_var) do
+		{:note, note}
 	end
 	
 	defp alpha({:variable, _}, alpha_var) do
 		{:variable, alpha_var} 
 	end
 
-  def note_string({_term, {:note, note}, term}) do
-		if (_term == :chord) do
-			"[" <> to_string(note) <> note_string(term) <> "]"
-		else
-		  to_string(note) <> note_string(term)
-		end
+	# converts notes into a string readable for PCM_Play
+	def note_string({:chord, note1, note2, note3}) do
+			"[" <> note_string(note1) <> note_string(note2) <> note_string(note3) <> "]"		
 	end
 	
-	def note_string({_term, _term1, _term2}) do
-		note_string(_term1) <> note_string(_term2)
+  def note_string({_term, {:note, note}, term}) do
+		  to_string(note) <> note_string(term)
+	end
+	
+	def note_string({_term, term1, term2}) do
+		note_string(term1) <> note_string(term2)
 	end
 
 	def note_string({:note, note}) do
@@ -273,21 +263,20 @@ defmodule LambdaMusic do
   @doc """
 	Takes in a term and converts it into a printable string
 	"""
-	def print_term({term, var}) do
+	def print_term({_term, var}) do
 		to_string(var)
 	end
 
-	def print_term({:chord, note1, note2}) do
-		print_term(note1) <> print_term(note2)
+	def print_term({:chord, note1, note2, note3}) do
+		print_term(note1) <> print_term(note2) <> print_term(note3)
 	end
 
 	def print_term({term, term1, term2}) when (term == :lambda) do
 		"\\#{to_string(term1)}." <> print_term(term2)
 	end
 	
-	def print_term({term, term1, term2}) do
+	def print_term({_term, term1, term2}) do
 		cond do
-	#	lambda?(term1) && chord?(term2) -> "(" <> print_term(term1) <> ")" <> "[" <> print_term(2) <> "]" 
 			lambda?(term1) -> "(" <> print_term(term1) <> ")" <> print_term(term2)
 			chord?(term2) -> "(" <> print_term(term1) <> ")" <> "[" <> print_term(term2) <> "]"
 			true -> "(" <> print_term(term1) <> print_term(term2) <> ")" 
@@ -295,7 +284,7 @@ defmodule LambdaMusic do
 	end
 
 	#checks to see if the second term in application is a chord
-	defp chord?({:chord, _, _}), do: true
+	defp chord?({:chord, _, _, _}), do: true
 	defp chord?({_term, _, _}), do: false
 	defp chord?({_term, _}), do: false
 end
