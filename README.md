@@ -22,13 +22,14 @@ Still a work in progress!
     ```
 ## Usage
     Currently only works well in the command line using iex:
+    ```
      LambdaMusic.compute("(\\x.\\y.\\z.((z x) y))[CGA]BD")
      (\x.\y.\z.((z x) y))[CGA]BD ->
      (\y.\z.((z)[CGA]y))(BD) ->
      (\z.((z)[CGA]B))D ->
      D[CGA]B
      "D[CGA]B"
-
+   ```
     
 
   
